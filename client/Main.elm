@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Html exposing (Html, button, div, text)
+import Html.Attributes
 import Html.Events exposing (onClick)
 
 
@@ -49,4 +50,19 @@ view : Model -> Html Msg
 view model =
     div []
         [ div [] [ text "Hi, I'm Elm." ]
+        , div [ Html.Attributes.attribute "class" "row" ]
+            [ div [ Html.Attributes.attribute "class" "cell" ] []
+            , div [ Html.Attributes.attribute "class" "cell" ] []
+            , div [ Html.Attributes.attribute "class" "cell" ] []
+            ]
+        , div [ Html.Attributes.attribute "class" "row" ]
+            [ div [ Html.Attributes.attribute "class" "cell" ] []
+            , div [ Html.Attributes.attribute "class" "cell" ] []
+            , div [ Html.Attributes.attribute "class" "cell" ] []
+            ]
+        , div [ Html.Attributes.attribute "class" "row" ]
+            [ div [ Html.Attributes.attribute "class" "cell" ] []
+            , div [ Html.Attributes.attribute "class" "cell" ] []
+            , div [ Html.Attributes.attribute "class" "cell" ] []
+            ]
         ]

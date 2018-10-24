@@ -8,7 +8,7 @@ yarn
 
 ## build
 ```
-yarn build-client
+yarn build-client --debug
 ```
 
 ## start

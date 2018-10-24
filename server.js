@@ -13,64 +13,71 @@ wss.broadcast = (data) => {
   })
 }
 
-const getPair = (newClient) => {
-  if (unpairedClient) {
-    return unpairedClient
+let unpairedClient
+
+const onClose = function () {
+  const ws = this
+  console.log(`bye connection, ${ws.id}`)
+  if (unpairedClient === ws) {
+    unpairedClient = null
+  } else if (ws.buddy) {
+    ws.buddy.send(encode({
+      type: 'lost-buddy'
+    }))
+    ws.buddy.buddy = null
+    unpairedClient = ws.buddy
   }
 }
 
-let unpairedClient
+const onMessage = function (message) {
+  const ws = this
+  console.log(`${ws.id} sent`, message)
+}
 
-wss.on('connection', (ws) => {
+const send = (ws, message) => {
+  if (!message.type) {
+    throw new Error('messages must have a type')
+  }
+  ws.send(encode(message))
+}
+
+const sendBuddyMessage = (ws) => {
+  send(ws, {
+    type: 'status',
+    text: `your buddy is ${ws.buddy.id}`,
+  })
+}
+
+const pairClients = (ws1, ws2) => {
+  ws1.buddy = ws2
+  ws2.buddy = ws1
+  sendBuddyMessage(ws1)
+  sendBuddyMessage(ws2)
+}
+
+const onConnection = function (ws) {
   ws.id = ++id
   console.log(`new connection, ${ws.id}`)
 
-  ws.on('message', (message) => {
-    console.log('received: %s', message)
-  })
+  ws.on('message', onMessage)
+  ws.on('close', onClose)
 
-  ws.on('close', () => {
-    console.log(`bye connection, ${ws.id}`)
-    if (unpairedClient === ws) {
-      unpairedClient = null
-    } else if (ws.buddy) {
-      ws.buddy.send(encode({
-        type: 'lost-buddy'
-      }))
-      ws.buddy.buddy = null
-      unpairedClient = ws.buddy
-    }
-  })
-
-  ws.send(encode({
+  send(ws, {
     type: 'connect',
     text: `your id is ${id}`,
-    id: id,
-  }))
+    id,
+  })
 
   if (unpairedClient) {
-    ws.buddy = unpairedClient
-    unpairedClient.buddy = ws
+    pairClients(ws, unpairedClient)
     unpairedClient = null
-    ws.send(encode({
-      type: 'status',
-      text: `your buddy is ${ws.buddy.id}`,
-    }))
-
-    ws.buddy.send(encode({
-      type: 'status',
-      text: `your buddy is ${ws.id}`,
-    }))
   } else {
-    ws.send(encode({
+    send(ws, {
       type: 'status',
       text: 'waiting for a buddy',
-    }))
+    })
     unpairedClient = ws
   }
+}
 
-  // wss.broadcast(encode({
-  //   type: 'new-client',
-  //   text: 'a new client has joined',
-  // }))
-})
+wss.on('connection', onConnection)

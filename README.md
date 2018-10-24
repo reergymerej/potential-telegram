@@ -8,10 +8,12 @@ yarn
 
 ## start
 ```
-./server.js
+./server/server.js
 ```
 
 ## open
 ```
-open index.html
+open client/index.html
 ```
+
+First, let's change the client to use Elm.

@@ -1,5 +1,6 @@
 const WebSocket = require('ws')
 const wss = new WebSocket.Server({ port: 8080 })
+const Game = require('./Game')
 
 let id = 0
 
@@ -55,6 +56,33 @@ const pairClients = (ws1, ws2) => {
   sendBuddyMessage(ws2)
 }
 
+const startGame = (ws1, ws2) => {
+  const game = new Game(ws1, ws2)
+  const board = game.getBoard()
+  ;[ws1, ws2].forEach(ws => {
+    send(ws, {
+      type: 'start-game',
+      board,
+      yourTurn: game.turn === ws,
+      you: game.getSymbol(ws),
+    })
+  })
+}
+
+const handlePairing = (ws, unpairedClient) => {
+  if (unpairedClient) {
+    pairClients(ws, unpairedClient)
+    startGame(ws, ws.buddy)
+    return null
+  } else {
+    send(ws, {
+      type: 'status',
+      text: 'waiting for a buddy',
+    })
+    return ws
+  }
+}
+
 const onConnection = function (ws) {
   ws.id = ++id
   console.log(`new connection, ${ws.id}`)
@@ -68,16 +96,7 @@ const onConnection = function (ws) {
     id,
   })
 
-  if (unpairedClient) {
-    pairClients(ws, unpairedClient)
-    unpairedClient = null
-  } else {
-    send(ws, {
-      type: 'status',
-      text: 'waiting for a buddy',
-    })
-    unpairedClient = ws
-  }
+  unpairedClient = handlePairing(ws, unpairedClient)
 }
 
 wss.on('connection', onConnection)

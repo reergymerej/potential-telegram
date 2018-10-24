@@ -14,13 +14,62 @@ main =
 -- MODEL
 
 
+type CellStatus
+    = X
+    | O
+    | Available
+
+
+type alias Cell =
+    { index : Int
+    , status : CellStatus
+    }
+
+
+type alias Row =
+    { index : Int
+    , cells : List Cell
+    }
+
+
+type alias Board =
+    { rows : List Row
+    }
+
+
 type alias Model =
-    Int
+    { board : Board
+    }
 
 
 init : Model
 init =
-    0
+    { board =
+        { rows =
+            [ { index = 0
+              , cells =
+                    [ { index = 0, status = Available }
+                    , { index = 1, status = Available }
+                    , { index = 2, status = Available }
+                    ]
+              }
+            , { index = 1
+              , cells =
+                    [ { index = 0, status = Available }
+                    , { index = 1, status = Available }
+                    , { index = 2, status = Available }
+                    ]
+              }
+            , { index = 2
+              , cells =
+                    [ { index = 0, status = Available }
+                    , { index = 1, status = Available }
+                    , { index = 2, status = Available }
+                    ]
+              }
+            ]
+        }
+    }
 
 
 
@@ -29,40 +78,31 @@ init =
 
 type Msg
     = Increment
-    | Decrement
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
         Increment ->
-            model + 1
-
-        Decrement ->
-            model - 1
+            model
 
 
 
 -- VIEW
 
 
+cellView : Cell -> Html Msg
+cellView model =
+    div [ Html.Attributes.attribute "class" "cell" ] []
+
+
+rowView : Row -> Html Msg
+rowView model =
+    div [ Html.Attributes.attribute "class" "row" ]
+        (List.map cellView model.cells)
+
+
 view : Model -> Html Msg
 view model =
     div []
-        [ div [] [ text "Hi, I'm Elm." ]
-        , div [ Html.Attributes.attribute "class" "row" ]
-            [ div [ Html.Attributes.attribute "class" "cell" ] []
-            , div [ Html.Attributes.attribute "class" "cell" ] []
-            , div [ Html.Attributes.attribute "class" "cell" ] []
-            ]
-        , div [ Html.Attributes.attribute "class" "row" ]
-            [ div [ Html.Attributes.attribute "class" "cell" ] []
-            , div [ Html.Attributes.attribute "class" "cell" ] []
-            , div [ Html.Attributes.attribute "class" "cell" ] []
-            ]
-        , div [ Html.Attributes.attribute "class" "row" ]
-            [ div [ Html.Attributes.attribute "class" "cell" ] []
-            , div [ Html.Attributes.attribute "class" "cell" ] []
-            , div [ Html.Attributes.attribute "class" "cell" ] []
-            ]
-        ]
+        (List.map rowView model.board.rows)

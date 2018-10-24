@@ -22,5 +22,10 @@
       </div>
     </div>
     <script src="index.js"></script>
+    <div id="elm-root"></div>
+    <script src="main.js"></script>
+    <script>
+      Elm.Main.init({ node: document.getElementById('elm-root') })
+    </script>
   </body>
 </html>

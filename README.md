@@ -6,6 +6,11 @@ Node and vanilla JS on the client.
 yarn
 ```
 
+## build
+```
+yarn build-client
+```
+
 ## start
 ```
 ./server/server.js

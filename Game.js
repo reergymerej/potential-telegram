@@ -3,10 +3,11 @@ function Game(X, O) {
   this.O = O
   this.turn = X
   this.board = [
-    [null, null, null],
+    [O, null, null],
     [null, X, null],
-    [null, null, null],
+    [null, null, O],
   ]
+  this.players = [X, O]
 }
 
 Game.prototype.getBoard = function () {
@@ -22,6 +23,21 @@ Game.prototype.getSymbol = function (player) {
   return player === this.X
     ? 'X'
     : 'O'
+}
+
+Game.prototype.selectCell = function (player, cellIndex) {
+  const rowIndex = Math.floor(cellIndex / 3)
+  const cell = cellIndex % 3
+  this.board[rowIndex][cell] = player
+
+  // TODO: check for game over
+  this.switchTurn()
+}
+
+Game.prototype.switchTurn = function () {
+  this.turn = this.turn === this.X
+    ? this.O
+    : this.X
 }
 
 module.exports = Game

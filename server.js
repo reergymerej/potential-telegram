@@ -5,6 +5,7 @@ const Game = require('./Game')
 let id = 0
 
 const encode = JSON.stringify
+const decode = JSON.parse
 
 wss.broadcast = (data) => {
   wss.clients.forEach((client) => {
@@ -30,9 +31,38 @@ const onClose = function () {
   }
 }
 
+const messageHandlers = {
+  whoops: (ws, message) => {
+    console.warn('not handled', message)
+  },
+  move: (ws, message) => {
+    const game = ws.game
+    // cellIndex
+    // TODO: verify it is my turn
+    // Send an error if it's not.
+
+    // update the game board
+    game.selectCell(ws, parseInt(message.cellIndex, 10))
+
+    // send messages
+    const board = game.getBoard()
+    game.players.forEach(ws => {
+      send(ws, {
+        type: 'update-game',
+        board,
+        yourTurn: game.turn === ws,
+        you: game.getSymbol(ws),
+      })
+    })
+  },
+}
+
 const onMessage = function (message) {
   const ws = this
-  console.log(`${ws.id} sent`, message)
+  const decoded = decode(message)
+  console.log(`${ws.id} sent`, decoded)
+  const handler = messageHandlers[decoded.type] || messageHandlers.whoops
+  handler(ws, decoded)
 }
 
 const send = (ws, message) => {
@@ -59,6 +89,8 @@ const pairClients = (ws1, ws2) => {
 const startGame = (ws1, ws2) => {
   const game = new Game(ws1, ws2)
   const board = game.getBoard()
+  ws1.game = game
+  ws2.game = game
   ;[ws1, ws2].forEach(ws => {
     send(ws, {
       type: 'start-game',

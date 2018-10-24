@@ -1,16 +1,22 @@
 module Main exposing (..)
 
-import Browser
+-- import Browser
+
 import Html exposing (Html, button, div, text)
 import Html.Attributes
 import Html.Events exposing (onClick)
 
 
 main =
-    Browser.sandbox { init = init, update = update, view = view }
+    Html.beginnerProgram
+        { model = init
+        , view = view
+        , update = update
+        }
 
 
 
+--  Browser.sandbox { init = init, update = update, view = view }
 -- MODEL
 
 

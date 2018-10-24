@@ -3,9 +3,9 @@ function Game(X, O) {
   this.O = O
   this.turn = X
   this.board = [
-    [O, null, null],
-    [null, X, null],
-    [null, null, O],
+    [null, null, null],
+    [null, null, null],
+    [null, null, null],
   ]
   this.players = [X, O]
 }

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const WebSocket = require('ws')
 const wss = new WebSocket.Server({ port: 8080 })
 const Game = require('./Game')

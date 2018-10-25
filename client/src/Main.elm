@@ -1,9 +1,10 @@
-module Main exposing (Board, Cell, CellStatus(..), Model, Msg(..), Row, cellView, init, main, rowView, update, view)
+port module Main exposing (Board, Cell, CellStatus(..), Model, Msg(..), Row, cellView, init, main, rowView, update, view)
 
 import Browser
 import Html exposing (Html, button, div, text)
 import Html.Attributes
 import Html.Events exposing (onClick)
+import Json.Encode as E
 
 
 main =
@@ -106,3 +107,6 @@ view : Model -> Html Msg
 view model =
     div []
         (List.map rowView model.board.rows)
+
+
+port messages : (E.Value -> msg) -> Sub msg

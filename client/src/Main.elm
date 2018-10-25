@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Main exposing (Board, Cell, CellStatus(..), Model, Msg(..), Row, cellView, init, main, rowView, update, view)
 
 import Browser
 import Html exposing (Html, button, div, text)

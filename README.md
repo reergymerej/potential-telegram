@@ -6,9 +6,9 @@ Node and vanilla JS on the client.
 yarn
 ```
 
-## build
+## build & watch
 ```
-yarn build-client --debug
+parcel client/index.html
 ```
 
 ## start
@@ -18,7 +18,5 @@ yarn build-client --debug
 
 ## open
 ```
-open client/index.html
+http://localhost:1234
 ```
-
-First, let's change the client to use Elm.

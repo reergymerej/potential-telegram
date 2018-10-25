@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "node-elm-compiler": "^5.0.1",
-    "nodemon": "^1.18.4"
+    "nodemon": "^1.18.4",
+    "parcel-bundler": "^1.10.3"
   }
 }

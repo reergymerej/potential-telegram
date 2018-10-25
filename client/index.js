@@ -2,7 +2,7 @@ import('./Main.elm')
   .then(({ Elm }) => {
     var node = document.getElementById('elm-root');
     Elm.Main.init({ node: node })
-  })
+  });
 
 (() => {
   const webSocket = new WebSocket('ws://localhost:8080', 'optionalProtocol')

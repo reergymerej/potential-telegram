@@ -11,6 +11,11 @@ yarn
 yarn watch-client
 ```
 
+## watch client source for dev
+```
+yarn watch-client
+```
+
 ## start
 ```
 ./server/server.js

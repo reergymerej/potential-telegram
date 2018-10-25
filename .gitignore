@@ -3,3 +3,5 @@ elm-stuff/
 client/main.js
 .cache/
 dist/
+bin/
+*.log

@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build-client": "./node_modules/.bin/elm make client/Main.elm --output=client/main.js"
+    "build-client": "elm make client/src/Main.elm --output=client/bin/main.js",
+    "watch-client": "parcel client/index.html"
   },
   "dependencies": {
     "elm": "^0.19.0-bugfix2",

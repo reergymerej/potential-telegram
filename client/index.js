@@ -1,6 +1,6 @@
-import('./Main.elm')
+import('./src/Main.elm')
   .then(({ Elm }) => {
-    var node = document.getElementById('elm-root');
+    var node = document.getElementById('elm-root')
     Elm.Main.init({ node: node })
   });
 

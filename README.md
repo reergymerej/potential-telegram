@@ -8,7 +8,7 @@ yarn
 
 ## build & watch
 ```
-parcel client/index.html
+yarn watch-client
 ```
 
 ## start

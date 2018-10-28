@@ -1,7 +1,8 @@
 {
   "scripts": {
     "build-client": "elm make client/src/Main.elm --output=client/bin/main.js",
-    "watch-client": "parcel client/index.html"
+    "watch-client": "parcel client/index.html",
+    "start-server": "./server/server.js"
   },
   "dependencies": {
     "ws": "^6.1.0"

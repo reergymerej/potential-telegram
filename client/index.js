@@ -21,7 +21,7 @@ const setupWebSockets = (app) => {
   webSocket.onmessage = (event) => {
     const message = decode(event.data)
     // All messages should be sent back through port to Elm.
-    app.ports.messages.send(message)
+    // app.ports.messages.send(message)
   }
 
   webSocket.onclose = (event) => {

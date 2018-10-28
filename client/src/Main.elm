@@ -40,37 +40,39 @@ type alias Board =
 
 type alias Model =
     { board : Board
+    , buttonClicks: Int
     }
 
 
 init : Model
 init =
-    { board =
-        { rows =
-            [ { index = 0
-              , cells =
-                    [ { index = 0, status = Available }
-                    , { index = 1, status = Available }
-                    , { index = 2, status = Available }
-                    ]
-              }
-            , { index = 1
-              , cells =
-                    [ { index = 0, status = Available }
-                    , { index = 1, status = Available }
-                    , { index = 2, status = Available }
-                    ]
-              }
-            , { index = 2
-              , cells =
-                    [ { index = 0, status = Available }
-                    , { index = 1, status = Available }
-                    , { index = 2, status = Available }
-                    ]
-              }
-            ]
-        }
+  { board =
+    { rows =
+      [ { index = 0
+      , cells =
+        [ { index = 0, status = Available }
+        , { index = 1, status = Available }
+        , { index = 2, status = Available }
+        ]
+      }
+      , { index = 1
+      , cells =
+        [ { index = 0, status = Available }
+        , { index = 1, status = Available }
+        , { index = 2, status = Available }
+        ]
+      }
+      , { index = 2
+      , cells =
+        [ { index = 0, status = Available }
+        , { index = 1, status = Available }
+        , { index = 2, status = Available }
+        ]
+      }
+      ]
     }
+    , buttonClicks = 0
+  }
 
 
 
@@ -79,6 +81,7 @@ init =
 
 type Msg
     = Increment
+    | SendTestMessage
 
 
 update : Msg -> Model -> Model
@@ -86,6 +89,9 @@ update msg model =
     case msg of
         Increment ->
             model
+        SendTestMessage ->
+          { model | buttonClicks = model.buttonClicks + 1 }
+
 
 
 
@@ -105,8 +111,11 @@ rowView model =
 
 view : Model -> Html Msg
 view model =
-    div []
+  div []
+  [ div []
         (List.map rowView model.board.rows)
+        , button [ onClick SendTestMessage ] [ text "test" ]
+        , div [] [text (String.fromInt model.buttonClicks)]
+        ]
 
-
-port messages : (E.Value -> msg) -> Sub msg
+port messages : E.Value -> Cmd msg

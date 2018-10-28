@@ -9,6 +9,12 @@ import('./src/Main.elm')
   });
 
 const setupWebSockets = (app) => {
+
+  app.ports.talkToOutside.subscribe(function(data) {
+    console.log('data from elm', data)
+    // localStorage.setItem('cache', JSON.stringify(data));
+  });
+
   console.log('setupWebSockets', app)
   const webSocket = new WebSocket('ws://localhost:8080', 'optionalProtocol')
 

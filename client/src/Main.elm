@@ -3,8 +3,8 @@ port module Main exposing (Model, Msg(..), init, main, subscriptions, update, vi
 import Browser
 import Html exposing (..)
 import Html.Events exposing (..)
-import Json.Decode as D
-import Json.Encode as E
+import Json.Decode
+import Json.Encode
 import Random
 
 
@@ -46,18 +46,18 @@ init _ =
 type Msg
     = Roll
     | NewFace Int
-    | DataFromJS E.Value
+    | DataFromJS Json.Encode.Value
 
 
-port portedFunction : E.Value -> Cmd whateverwewant
+port portedFunction : Json.Encode.Value -> Cmd whateverwewant
 
 
-port fromJS : (E.Value -> msg) -> Sub msg
+port fromJS : (Json.Encode.Value -> msg) -> Sub msg
 
 
-decodeDataFromJS : E.Value -> String
-decodeDataFromJS x =
-    case D.decodeValue D.string x of
+decodeJsonString : Json.Encode.Value -> String
+decodeJsonString x =
+    case Json.Decode.decodeValue Json.Decode.string x of
         Err err ->
             "decode error"
 
@@ -75,11 +75,11 @@ update msg model =
 
         NewFace newFace ->
             ( { model | dieFace = newFace }
-            , portedFunction (E.int newFace)
+            , portedFunction (Json.Encode.int newFace)
             )
 
         DataFromJS value ->
-            ( { model | wsMessage = decodeDataFromJS value }
+            ( { model | wsMessage = decodeJsonString value }
             , Cmd.none
             )
 

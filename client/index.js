@@ -10,12 +10,11 @@ import('./src/Main.elm')
 
 const setupWebSockets = (app) => {
 
-  app.ports.talkToOutside.subscribe(function(data) {
+  app.ports.portedFunction.subscribe(function(data) {
     console.log('data from elm', data)
     // localStorage.setItem('cache', JSON.stringify(data));
   });
 
-  console.log('setupWebSockets', app)
   const webSocket = new WebSocket('ws://localhost:8080', 'optionalProtocol')
 
   const decode = JSON.parse
@@ -27,7 +26,8 @@ const setupWebSockets = (app) => {
   webSocket.onmessage = (event) => {
     const message = decode(event.data)
     // All messages should be sent back through port to Elm.
-    // app.ports.messages.send(message)
+    console.log(message)
+    app.ports.fromJS.send(event.data)
   }
 
   webSocket.onclose = (event) => {
@@ -46,4 +46,3 @@ const setupWebSockets = (app) => {
    *  }))
    */
 }
-

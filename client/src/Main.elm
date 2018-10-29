@@ -3,9 +3,9 @@ port module Main exposing (Model, Msg(..), init, main, subscriptions, update, vi
 import Browser
 import Html exposing (..)
 import Html.Events exposing (..)
-import Random
-
+import Json.Decode as D
 import Json.Encode as E
+import Random
 
 
 -- MAIN
@@ -26,12 +26,15 @@ main =
 
 type alias Model =
     { dieFace : Int
+    , wsMessage : String
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model 1
+    ( { dieFace = 1
+      , wsMessage = "not yet"
+      }
     , Cmd.none
     )
 
@@ -43,8 +46,24 @@ init _ =
 type Msg
     = Roll
     | NewFace Int
+    | DataFromJS E.Value
 
-port talkToOutside : E.Value -> Cmd msg
+
+port portedFunction : E.Value -> Cmd whateverwewant
+
+
+port fromJS : (E.Value -> msg) -> Sub msg
+
+
+decodeDataFromJS : E.Value -> String
+decodeDataFromJS x =
+    case D.decodeValue D.string x of
+        Err err ->
+            "decode error"
+
+        Ok str ->
+            str
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -55,8 +74,13 @@ update msg model =
             )
 
         NewFace newFace ->
-            ( Model newFace
-            , talkToOutside (E.int newFace)
+            ( { model | dieFace = newFace }
+            , portedFunction (E.int newFace)
+            )
+
+        DataFromJS value ->
+            ( { model | wsMessage = decodeDataFromJS value }
+            , Cmd.none
             )
 
 
@@ -66,7 +90,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    fromJS DataFromJS
 
 
 
@@ -77,8 +101,6 @@ view : Model -> Html Msg
 view model =
     div []
         [ h1 [] [ text (String.fromInt model.dieFace) ]
+        , div [] [ text model.wsMessage ]
         , button [ onClick Roll ] [ text "Roll" ]
         ]
-
-
-

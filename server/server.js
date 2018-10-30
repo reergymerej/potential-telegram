@@ -25,9 +25,9 @@ const onClose = function () {
   if (unpairedClient === ws) {
     unpairedClient = null
   } else if (ws.buddy) {
-    ws.buddy.send(encode({
+    send(ws.buddy, {
       type: 'lost-buddy'
-    }))
+    })
     ws.buddy.buddy = null
     unpairedClient = ws.buddy
   }
@@ -71,7 +71,10 @@ const send = (ws, message) => {
   if (!message.type) {
     throw new Error('messages must have a type')
   }
-  ws.send(encode(message))
+  ws.send(encode({
+    ...message,
+    time: Date.now(),
+  }))
 }
 
 const sendBuddyMessage = (ws) => {

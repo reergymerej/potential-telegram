@@ -25,7 +25,7 @@ main =
 
 
 type alias AppMessage =
-    String
+    { messageType : String }
 
 
 type alias Model =
@@ -56,25 +56,27 @@ port sendMessage : Json.Encode.Value -> Cmd whateverwewant
 port fromJS : (Json.Encode.Value -> msg) -> Sub msg
 
 
-decodeJsonString : Json.Encode.Value -> String
-decodeJsonString x =
-    case Json.Decode.decodeValue Json.Decode.string x of
+
+-- This fails because we're trying to extract a field from plain JSON.
+-- We need to parse the JSON into an object first.
+
+
+getMessageType : Json.Encode.Value -> Result Json.Decode.Error String
+getMessageType encodedValue =
+    Json.Decode.decodeValue (Json.Decode.field "type" Json.Decode.string) encodedValue
+
+
+decodeDataFromJs : Json.Encode.Value -> AppMessage
+decodeDataFromJs x =
+    case getMessageType x of
+        -- case Json.Decode.decodeValue (Json.Decode.field "type" Json.Decode.string) x of
         Err err ->
-            "decode error"
+            { messageType = Json.Decode.errorToString err
+            }
 
-        Ok str ->
-            str
-
-
-testMessage =
-    Json.Encode.object
-        [ ( "type", Json.Encode.string "test" )
-        ]
-
-
-getMessage : String
-getMessage =
-    Json.Encode.encode 2 testMessage
+        Ok messageType ->
+            { messageType = messageType
+            }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -86,10 +88,10 @@ update msg model =
             , sendMessage (Json.Encode.string "a string, stringified")
             )
 
-        DataFromJS value ->
+        DataFromJS jsonMessage ->
             let
                 decoded =
-                    decodeJsonString value
+                    decodeDataFromJs jsonMessage
             in
             ( { model
                 | messages = decoded :: model.messages
@@ -146,14 +148,14 @@ getIntFromJson json =
 -- VIEW
 
 
-appMessage : AppMessage -> Html Msg
-appMessage m =
-    li [] [ text m ]
+renderAppMessage : AppMessage -> Html Msg
+renderAppMessage m =
+    li [] [ text m.messageType ]
 
 
 renderMessages : List AppMessage -> Html Msg
 renderMessages messages =
-    ul [] (List.map appMessage messages)
+    ul [] (List.map renderAppMessage messages)
 
 
 view : Model -> Html Msg

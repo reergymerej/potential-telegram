@@ -29,17 +29,13 @@ type alias AppMessage =
 
 
 type alias Model =
-    { dieFace : Int
-    , wsMessage : AppMessage
-    , messages : List AppMessage
+    { messages : List AppMessage
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { dieFace = 1
-      , wsMessage = "not yet"
-      , messages = []
+    ( { messages = []
       }
     , Cmd.none
     )
@@ -50,8 +46,7 @@ init _ =
 
 
 type Msg
-    = Roll
-    | NewFace Int
+    = SendToJS
     | DataFromJS Json.Encode.Value
 
 
@@ -85,16 +80,10 @@ getMessage =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Roll ->
+        SendToJS ->
             ( model
-            , Random.generate NewFace (Random.int 1 6)
-            )
-
-        NewFace newFace ->
-            ( { model | dieFace = newFace }
               -- TODO: Build a WS message.
             , sendMessage (Json.Encode.string "a string, stringified")
-              -- , sendMessage (Json.Encode.string "a string, stringified")
             )
 
         DataFromJS value ->
@@ -103,8 +92,7 @@ update msg model =
                     decodeJsonString value
             in
             ( { model
-                | wsMessage = decoded
-                , messages = decoded :: model.messages
+                | messages = decoded :: model.messages
               }
             , Cmd.none
             )
@@ -171,8 +159,7 @@ renderMessages messages =
 view : Model -> Html Msg
 view model =
     div []
-        [ h1 [] [ text (String.fromInt model.dieFace) ]
-        , button [ onClick Roll ] [ text "Roll" ]
+        [ button [ onClick SendToJS ] [ text "SendToJS" ]
         , div [] [ text (String.fromInt (getIntFromJson jsonTest)) ]
         , renderMessages model.messages
         ]

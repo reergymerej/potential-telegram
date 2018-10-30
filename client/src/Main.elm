@@ -49,7 +49,7 @@ type Msg
     | DataFromJS Json.Encode.Value
 
 
-port portedFunction : Json.Encode.Value -> Cmd whateverwewant
+port sendMessage : Json.Encode.Value -> Cmd whateverwewant
 
 
 port fromJS : (Json.Encode.Value -> msg) -> Sub msg
@@ -64,6 +64,13 @@ decodeJsonString x =
         Ok str ->
             str
 
+testMessage = Json.Encode.object [
+  ("type", Json.Encode.string "test")
+  ]
+
+getMessage: String
+getMessage =
+  Json.Encode.encode 2 testMessage
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -75,7 +82,9 @@ update msg model =
 
         NewFace newFace ->
             ( { model | dieFace = newFace }
-            , portedFunction (Json.Encode.int newFace)
+            -- TODO: Build a WS message.
+            , sendMessage (Json.Encode.string "a string, stringified")
+            -- , sendMessage (Json.Encode.string "a string, stringified")
             )
 
         DataFromJS value ->
@@ -84,15 +93,17 @@ update msg model =
             )
 
 
+jsonTest : String
+jsonTest = """
+{
+  "name": "Tom",
+  "age": 42
+}
+"""
 
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    fromJS DataFromJS
-
-
+ageDecoder: Json.Decode.Decoder Int
+ageDecoder =
+  Json.Decode.field "age" Json.Decode.int
 
 -- VIEW
 
@@ -103,4 +114,14 @@ view model =
         [ h1 [] [ text (String.fromInt model.dieFace) ]
         , div [] [ text model.wsMessage ]
         , button [ onClick Roll ] [ text "Roll" ]
+        , div [] [text (String.fromInt (ageDecoder jsonTest) )]
         ]
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    fromJS DataFromJS
+
+

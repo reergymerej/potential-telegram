@@ -10,7 +10,7 @@ import('./src/Main.elm')
 
 const setupWebSockets = (app) => {
 
-  app.ports.portedFunction.subscribe(function(data) {
+  app.ports.sendMessage.subscribe(function(data) {
     console.log('data from elm', data)
     // localStorage.setItem('cache', JSON.stringify(data));
   });

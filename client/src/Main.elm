@@ -27,6 +27,7 @@ main =
 type alias Model =
     { dieFace : Int
     , wsMessage : String
+    , messages : List String
     }
 
 
@@ -34,6 +35,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { dieFace = 1
       , wsMessage = "not yet"
+      , messages = []
       }
     , Cmd.none
     )
@@ -92,7 +94,14 @@ update msg model =
             )
 
         DataFromJS value ->
-            ( { model | wsMessage = decodeJsonString value }
+            let
+                decoded =
+                    decodeJsonString value
+            in
+            ( { model
+                | wsMessage = decoded
+                , messages = decoded :: model.messages
+              }
             , Cmd.none
             )
 
@@ -143,6 +152,7 @@ view model =
         , div [] [ text model.wsMessage ]
         , button [ onClick Roll ] [ text "Roll" ]
         , div [] [ text (String.fromInt (getIntFromJson jsonTest)) ]
+        , div [] [ text (String.fromInt (List.length model.messages)) ]
         ]
 
 

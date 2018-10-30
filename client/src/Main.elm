@@ -24,10 +24,14 @@ main =
 -- MODEL
 
 
+type alias AppMessage =
+    String
+
+
 type alias Model =
     { dieFace : Int
-    , wsMessage : String
-    , messages : List String
+    , wsMessage : AppMessage
+    , messages : List AppMessage
     }
 
 
@@ -106,6 +110,15 @@ update msg model =
             )
 
 
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    fromJS DataFromJS
+
+
 jsonTest : String
 jsonTest =
     """
@@ -145,21 +158,21 @@ getIntFromJson json =
 -- VIEW
 
 
+appMessage : AppMessage -> Html Msg
+appMessage m =
+    li [] [ text m ]
+
+
+renderMessages : List AppMessage -> Html Msg
+renderMessages messages =
+    ul [] (List.map appMessage messages)
+
+
 view : Model -> Html Msg
 view model =
     div []
         [ h1 [] [ text (String.fromInt model.dieFace) ]
-        , div [] [ text model.wsMessage ]
         , button [ onClick Roll ] [ text "Roll" ]
         , div [] [ text (String.fromInt (getIntFromJson jsonTest)) ]
-        , div [] [ text (String.fromInt (List.length model.messages)) ]
+        , renderMessages model.messages
         ]
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    fromJS DataFromJS

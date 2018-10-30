@@ -64,13 +64,17 @@ decodeJsonString x =
         Ok str ->
             str
 
-testMessage = Json.Encode.object [
-  ("type", Json.Encode.string "test")
-  ]
 
-getMessage: String
+testMessage =
+    Json.Encode.object
+        [ ( "type", Json.Encode.string "test" )
+        ]
+
+
+getMessage : String
 getMessage =
-  Json.Encode.encode 2 testMessage
+    Json.Encode.encode 2 testMessage
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -82,9 +86,9 @@ update msg model =
 
         NewFace newFace ->
             ( { model | dieFace = newFace }
-            -- TODO: Build a WS message.
+              -- TODO: Build a WS message.
             , sendMessage (Json.Encode.string "a string, stringified")
-            -- , sendMessage (Json.Encode.string "a string, stringified")
+              -- , sendMessage (Json.Encode.string "a string, stringified")
             )
 
         DataFromJS value ->
@@ -94,16 +98,40 @@ update msg model =
 
 
 jsonTest : String
-jsonTest = """
+jsonTest =
+    """
 {
   "name": "Tom",
   "age": 42
 }
 """
 
-ageDecoder: Json.Decode.Decoder Int
+
+
+-- This is the decoder.  It only says what the field name type is.
+
+
+ageDecoder : Json.Decode.Decoder Int
 ageDecoder =
-  Json.Decode.field "age" Json.Decode.int
+    Json.Decode.field "age" Json.Decode.int
+
+
+
+-- This is the function that actually pulls the value, using the decoder.
+
+
+getIntFromJson : String -> Int
+getIntFromJson json =
+    case Json.Decode.decodeString ageDecoder json of
+        -- TODO: Figure out the right way to handle failures here.
+        -- Maybe?
+        Err err ->
+            -1
+
+        Ok int ->
+            int
+
+
 
 -- VIEW
 
@@ -114,8 +142,10 @@ view model =
         [ h1 [] [ text (String.fromInt model.dieFace) ]
         , div [] [ text model.wsMessage ]
         , button [ onClick Roll ] [ text "Roll" ]
-        , div [] [text (String.fromInt (ageDecoder jsonTest) )]
+        , div [] [ text (String.fromInt (getIntFromJson jsonTest)) ]
         ]
+
+
 
 -- SUBSCRIPTIONS
 
@@ -123,5 +153,3 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     fromJS DataFromJS
-
-

@@ -2,9 +2,33 @@ port module Main exposing (Model, Msg(..), init, main, subscriptions, update, vi
 
 import Browser
 import Html exposing (..)
+import Html.Attributes
 import Html.Events exposing (..)
 import Json.Decode
 import Json.Encode
+
+
+type CellStatus
+    = X
+    | O
+    | Available
+
+
+type alias Cell =
+    { index : Int
+    , status : CellStatus
+    }
+
+
+type alias Row =
+    { index : Int
+    , cells : List Cell
+    }
+
+
+type alias Board =
+    { rows : List Row
+    }
 
 
 type alias AppMessage =
@@ -15,7 +39,8 @@ type alias AppMessage =
 
 
 type alias Model =
-    { messages : List AppMessage
+    { board : Board
+    , messages : List AppMessage
     , decodeError : Maybe String
     }
 
@@ -27,7 +52,32 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { messages = []
+    ( { board =
+            { rows =
+                [ { index = 0
+                  , cells =
+                        [ { index = 0, status = Available }
+                        , { index = 1, status = Available }
+                        , { index = 2, status = Available }
+                        ]
+                  }
+                , { index = 1
+                  , cells =
+                        [ { index = 0, status = Available }
+                        , { index = 1, status = Available }
+                        , { index = 2, status = Available }
+                        ]
+                  }
+                , { index = 2
+                  , cells =
+                        [ { index = 0, status = Available }
+                        , { index = 1, status = Available }
+                        , { index = 2, status = Available }
+                        ]
+                  }
+                ]
+            }
+      , messages = []
       , decodeError = Maybe.Nothing
       }
     , Cmd.none
@@ -156,6 +206,22 @@ renderDecodeError maybe =
             div [] [ text err ]
 
 
+cellView : Cell -> Html Msg
+cellView model =
+    div [ Html.Attributes.attribute "class" "cell" ] []
+
+
+rowView : Row -> Html Msg
+rowView model =
+    div [ Html.Attributes.attribute "class" "row" ]
+        (List.map cellView model.cells)
+
+
+boardView : Board -> Html.Html Msg
+boardView board =
+    div [] (List.map rowView board.rows)
+
+
 view : Model -> Html Msg
 view model =
     div []
@@ -165,6 +231,7 @@ view model =
             [ h2 [] [ text "Decode Error" ]
             , renderDecodeError model.decodeError
             ]
+        , boardView model.board
         ]
 
 

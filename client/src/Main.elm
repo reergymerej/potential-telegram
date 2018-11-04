@@ -45,20 +45,14 @@ subscriptions model =
 port sendMessage : Json.Encode.Value -> Cmd whateverwewant
 
 
+decodeDataFromJs : Json.Encode.Value -> Result Json.Decode.Error AppMessage
+decodeDataFromJs encodedValue =
+    case Json.Decode.decodeValue (Json.Decode.field "type" Json.Decode.string) encodedValue of
+        Result.Err decodeError ->
+            Result.Err decodeError
 
--- This should return the decoded value OR an error
-
-
-decodeDataFromJs x =
-    case getMessageType x of
-        -- case Json.Decode.decodeValue (Json.Decode.field "type" Json.Decode.string) x of
-        Err err ->
-            { messageType = Json.Decode.errorToString err
-            }
-
-        Ok messageType ->
-            { messageType = messageType
-            }
+        Result.Ok decoded ->
+            Result.Ok { messageType = decoded }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -71,12 +65,8 @@ update msg model =
             )
 
         DataFromJS encodedValue ->
-            -- We've got some data.  We need to return a Model and Cmd Msg.
-            -- If we can decode it, update the model to show the new message.
-            -- If there is a decode problem, add it to the model so we can see it.
-            -- Try to decode, get a Result.
-            -- Handle cases for the Result.
-            case Json.Decode.decodeValue Json.Decode.int encodedValue of
+            case decodeDataFromJs encodedValue of
+                -- If there is a decode problem, add it to the model so we can see it.
                 Result.Err decodeError ->
                     ( { model
                         | decodeError =
@@ -88,12 +78,13 @@ update msg model =
                     , Cmd.none
                     )
 
+                -- If we can decode it, update the model to include the new message.
                 Result.Ok decoded ->
                     ( { model
                         | decodeError = Nothing
+                        , messages = decoded :: model.messages
 
-                        -- , messages = decoded :: model.messages
-                        , messages = { messageType = "dummy" } :: model.messages
+                        -- , messages = { messageType = "dummy" } :: model.messages
                       }
                     , Cmd.none
                     )

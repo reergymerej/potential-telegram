@@ -8,29 +8,14 @@ import Json.Encode
 import Random
 
 
--- MAIN
-
-
-main =
-    Browser.element
-        { init = init
-        , update = update
-        , subscriptions = subscriptions
-        , view = view
-        }
-
-
-
--- MODEL
-
-
-type alias AppMessage =
-    { messageType : String }
-
-
 type alias Model =
     { messages : List AppMessage
     }
+
+
+type Msg
+    = SendToJS
+    | DataFromJS Json.Encode.Value
 
 
 init : () -> ( Model, Cmd Msg )
@@ -41,29 +26,15 @@ init _ =
     )
 
 
-
--- UPDATE
-
-
-type Msg
-    = SendToJS
-    | DataFromJS Json.Encode.Value
-
-
-port sendMessage : Json.Encode.Value -> Cmd whateverwewant
-
-
 port fromJS : (Json.Encode.Value -> msg) -> Sub msg
 
 
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    fromJS DataFromJS
 
--- This fails because we're trying to extract a field from plain JSON.
--- We need to parse the JSON into an object first.
 
-
-getMessageType : Json.Encode.Value -> Result Json.Decode.Error String
-getMessageType encodedValue =
-    Json.Decode.decodeValue (Json.Decode.field "type" Json.Decode.string) encodedValue
+port sendMessage : Json.Encode.Value -> Cmd whateverwewant
 
 
 decodeDataFromJs : Json.Encode.Value -> AppMessage
@@ -100,13 +71,25 @@ update msg model =
             )
 
 
+getMessageType : Json.Encode.Value -> Result Json.Decode.Error String
+getMessageType encodedValue =
+    Json.Decode.decodeValue (Json.Decode.field "type" Json.Decode.string) encodedValue
 
--- SUBSCRIPTIONS
+
+ageDecoder : Json.Decode.Decoder Int
+ageDecoder =
+    Json.Decode.field "age" Json.Decode.int
 
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    fromJS DataFromJS
+getIntFromJson : String -> Int
+getIntFromJson json =
+    case Json.Decode.decodeString ageDecoder json of
+        -- Maybe?
+        Err err ->
+            -1
+
+        Ok int ->
+            int
 
 
 jsonTest : String
@@ -119,33 +102,8 @@ jsonTest =
 """
 
 
-
--- This is the decoder.  It only says what the field name type is.
-
-
-ageDecoder : Json.Decode.Decoder Int
-ageDecoder =
-    Json.Decode.field "age" Json.Decode.int
-
-
-
--- This is the function that actually pulls the value, using the decoder.
-
-
-getIntFromJson : String -> Int
-getIntFromJson json =
-    case Json.Decode.decodeString ageDecoder json of
-        -- TODO: Figure out the right way to handle failures here.
-        -- Maybe?
-        Err err ->
-            -1
-
-        Ok int ->
-            int
-
-
-
--- VIEW
+type alias AppMessage =
+    { messageType : String }
 
 
 renderAppMessage : AppMessage -> Html Msg
@@ -165,3 +123,12 @@ view model =
         , div [] [ text (String.fromInt (getIntFromJson jsonTest)) ]
         , renderMessages model.messages
         ]
+
+
+main =
+    Browser.element
+        { init = init
+        , subscriptions = subscriptions
+        , update = update
+        , view = view
+        }

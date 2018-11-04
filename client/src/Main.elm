@@ -41,13 +41,14 @@ type alias AppMessage =
 type alias Model =
     { board : Board
     , messages : List AppMessage
-    , decodeError : Maybe String
+    , debugString : Maybe String
     }
 
 
 type Msg
     = SendToJS
     | DataFromJS Json.Encode.Value
+    | SelectCell Int Int
 
 
 init : () -> ( Model, Cmd Msg )
@@ -78,7 +79,7 @@ init _ =
                 ]
             }
       , messages = []
-      , decodeError = Maybe.Nothing
+      , debugString = Maybe.Nothing
       }
     , Cmd.none
     )
@@ -148,7 +149,7 @@ update msg model =
                 -- If there is a decode problem, add it to the model so we can see it.
                 Result.Err decodeError ->
                     ( { model
-                        | decodeError =
+                        | debugString =
                             Just
                                 (Json.Decode.errorToString
                                     decodeError
@@ -160,11 +161,16 @@ update msg model =
                 -- If we can decode it, update the model to include the new message.
                 Result.Ok decoded ->
                     ( { model
-                        | decodeError = Nothing
+                        | debugString = Nothing
                         , messages = decoded :: model.messages
                       }
                     , Cmd.none
                     )
+
+        SelectCell rowIndex cellIndex ->
+            ( model
+            , Cmd.none
+            )
 
 
 renderMessageText : Maybe String -> Html Msg
@@ -196,8 +202,8 @@ renderMessages messages =
         ]
 
 
-renderDecodeError : Maybe String -> Html Msg
-renderDecodeError maybe =
+renderDebugString : Maybe String -> Html Msg
+renderDebugString maybe =
     case maybe of
         Nothing ->
             div [] []
@@ -214,7 +220,7 @@ cellAttributeView label index =
 cellView : Int -> Cell -> Html Msg
 cellView rowIndex cell =
     div [ Html.Attributes.attribute "class" "cell" ]
-        [ Html.button [] [ text "pick" ]
+        [ Html.button [ onClick (SelectCell rowIndex cell.index) ] [ text "pick" ]
         , cellAttributeView "row" rowIndex
         , cellAttributeView "cell" cell.index
         ]
@@ -242,8 +248,8 @@ view model =
         , button [ onClick SendToJS ] [ text "SendToJS" ]
         , renderMessages model.messages
         , div []
-            [ h2 [] [ text "Decode Error" ]
-            , renderDecodeError model.decodeError
+            [ h2 [] [ text "Debug This!" ]
+            , renderDebugString model.debugString
             ]
         ]
 

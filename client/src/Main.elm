@@ -35,6 +35,7 @@ type alias AppMessage =
     { messageType : String
     , time : Int
     , text : Maybe String
+    , yourTurn : Maybe Bool
     }
 
 
@@ -42,6 +43,7 @@ type alias Model =
     { board : Board
     , messages : List AppMessage
     , debugString : Maybe String
+    , yourTurn : Bool
     }
 
 
@@ -79,6 +81,7 @@ init _ =
             }
       , messages = []
       , debugString = Maybe.Nothing
+      , yourTurn = False
       }
     , Cmd.none
     )
@@ -111,12 +114,19 @@ messageTextDecoder =
         (Json.Decode.field "text" Json.Decode.string)
 
 
+messageYourTurnDecoder : Json.Decode.Decoder (Maybe Bool)
+messageYourTurnDecoder =
+    Json.Decode.maybe
+        (Json.Decode.field "yourTurn" Json.Decode.bool)
+
+
 messageDecoder : Json.Decode.Decoder AppMessage
 messageDecoder =
-    Json.Decode.map3 AppMessage
+    Json.Decode.map4 AppMessage
         messageTypeDecoder
         messageTimeDecoder
         messageTextDecoder
+        messageYourTurnDecoder
 
 
 getCellCoordsString : Int -> Int -> String
@@ -142,6 +152,21 @@ getSelectCellMessage rowIndex cellIndex =
         ]
 
 
+getNewModel : Model -> AppMessage -> Model
+getNewModel model appMessage =
+    case appMessage.messageType of
+        "start-game" ->
+            { model
+                | debugString = Just "started the game!"
+                , yourTurn = appMessage.yourTurn == Just True
+            }
+
+        _ ->
+            { model
+                | debugString = Nothing
+            }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -160,11 +185,17 @@ update msg model =
                     )
 
                 -- If we can decode it, update the model to include the new message.
-                Result.Ok decoded ->
-                    ( { model
-                        | debugString = Nothing
-                        , messages = decoded :: model.messages
-                      }
+                Result.Ok appMessage ->
+                    -- Depending on what type of message this was, we may need to
+                    -- update the model in different ways.
+                    let
+                        newModel =
+                            { model
+                                | debugString = Nothing
+                                , messages = appMessage :: model.messages
+                            }
+                    in
+                    ( getNewModel newModel appMessage
                     , Cmd.none
                     )
 
@@ -224,36 +255,40 @@ cellAttributeView label index =
     div [] [ text (label ++ ": " ++ String.fromInt index) ]
 
 
-cellView : Int -> Cell -> Html Msg
-cellView rowIndex cell =
+cellView : Bool -> Int -> Cell -> Html Msg
+cellView isSelectable rowIndex cell =
     div [ Html.Attributes.attribute "class" "cell" ]
-        [ Html.button [ onClick (SelectCell rowIndex cell.index) ] [ text "pick" ]
+        [ if isSelectable then
+            Html.button [ onClick (SelectCell rowIndex cell.index) ] [ text "pick" ]
+
+          else
+            div [] []
         , cellAttributeView "row" rowIndex
         , cellAttributeView "cell" cell.index
         ]
 
 
-rowView : Row -> Html Msg
-rowView row =
+rowView : Bool -> Row -> Html Msg
+rowView yourTurn row =
     let
         cellViewForRow =
-            cellView row.index
+            cellView yourTurn row.index
     in
     div [ Html.Attributes.attribute "class" "row" ]
         (List.map cellViewForRow row.cells)
 
 
-boardView : Board -> Html.Html Msg
-boardView board =
-    div [] (List.map rowView board.rows)
+boardView : Bool -> Board -> Html.Html Msg
+boardView yourTurn board =
+    div [] (List.map (rowView yourTurn) board.rows)
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ boardView model.board
-        , renderMessages model.messages
+        [ boardView model.yourTurn model.board
         , renderDebugString model.debugString
+        , renderMessages model.messages
         ]
 
 

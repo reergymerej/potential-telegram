@@ -9,6 +9,7 @@ import('./src/Main.elm')
   });
 
 const setupWebSockets = (app) => {
+  console.log('hello!')
 
   app.ports.sendMessage.subscribe(function(data) {
     console.log('data from elm', data)

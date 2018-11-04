@@ -8,8 +8,14 @@ import Json.Encode
 import Random
 
 
+type alias AppMessage =
+    { messageType : String }
+
+
 type alias Model =
     { messages : List AppMessage
+    , fromJs : Maybe Int
+    , decodeError : Maybe String
     }
 
 
@@ -21,6 +27,8 @@ type Msg
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { messages = []
+      , fromJs = Maybe.Nothing
+      , decodeError = Maybe.Nothing
       }
     , Cmd.none
     )
@@ -37,7 +45,10 @@ subscriptions model =
 port sendMessage : Json.Encode.Value -> Cmd whateverwewant
 
 
-decodeDataFromJs : Json.Encode.Value -> AppMessage
+
+-- This should return the decoded value OR an error
+
+
 decodeDataFromJs x =
     case getMessageType x of
         -- case Json.Decode.decodeValue (Json.Decode.field "type" Json.Decode.string) x of
@@ -59,16 +70,33 @@ update msg model =
             , sendMessage (Json.Encode.string "a string, stringified")
             )
 
-        DataFromJS jsonMessage ->
-            let
-                decoded =
-                    decodeDataFromJs jsonMessage
-            in
-            ( { model
-                | messages = decoded :: model.messages
-              }
-            , Cmd.none
-            )
+        DataFromJS encodedValue ->
+            -- We've got some data.  We need to return a Model and Cmd Msg.
+            -- If we can decode it, update the model to show the new message.
+            -- If there is a decode problem, add it to the model so we can see it.
+            -- Try to decode, get a Result.
+            -- Handle cases for the Result.
+            case Json.Decode.decodeValue Json.Decode.int encodedValue of
+                Result.Err decodeError ->
+                    ( { model
+                        | decodeError =
+                            Just
+                                (Json.Decode.errorToString
+                                    decodeError
+                                )
+                      }
+                    , Cmd.none
+                    )
+
+                Result.Ok decoded ->
+                    ( { model
+                        | decodeError = Nothing
+
+                        -- , messages = decoded :: model.messages
+                        , messages = { messageType = "dummy" } :: model.messages
+                      }
+                    , Cmd.none
+                    )
 
 
 getMessageType : Json.Encode.Value -> Result Json.Decode.Error String
@@ -102,10 +130,6 @@ jsonTest =
 """
 
 
-type alias AppMessage =
-    { messageType : String }
-
-
 renderAppMessage : AppMessage -> Html Msg
 renderAppMessage m =
     li [] [ text m.messageType ]
@@ -113,7 +137,20 @@ renderAppMessage m =
 
 renderMessages : List AppMessage -> Html Msg
 renderMessages messages =
-    ul [] (List.map renderAppMessage messages)
+    div []
+        [ ul [] (List.map renderAppMessage messages)
+        , div [] [ text ("messages: " ++ String.fromInt (List.length messages)) ]
+        ]
+
+
+renderDecodeError : Maybe String -> Html Msg
+renderDecodeError maybe =
+    case maybe of
+        Nothing ->
+            div [] []
+
+        Just err ->
+            div [] [ text err ]
 
 
 view : Model -> Html Msg
@@ -122,6 +159,10 @@ view model =
         [ button [ onClick SendToJS ] [ text "SendToJS" ]
         , div [] [ text (String.fromInt (getIntFromJson jsonTest)) ]
         , renderMessages model.messages
+        , div []
+            [ h2 [] [ text "Decode Error" ]
+            , renderDecodeError model.decodeError
+            ]
         ]
 
 

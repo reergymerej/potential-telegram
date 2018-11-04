@@ -46,8 +46,7 @@ type alias Model =
 
 
 type Msg
-    = SendToJS
-    | DataFromJS Json.Encode.Value
+    = DataFromJS Json.Encode.Value
     | SelectCell Int Int
 
 
@@ -112,21 +111,6 @@ messageTextDecoder =
         (Json.Decode.field "text" Json.Decode.string)
 
 
-
--- type alias Foo = { bing : Int, bang : Int }
--- implicitly creates
--- Foo : Int -> Int -> Foo
--- so you can
--- Foo 1 2 returns { bing = 1, bang = 2 }
---
--- This is a Record Constructor.  It can be expressed as
--- (a -> b -> value)
---
--- So in
--- map2 : (a -> b -> value) -> Decoder a -> Decoder b -> Decoder value
--- the first arg is/can be a type.
-
-
 messageDecoder : Json.Decode.Decoder AppMessage
 messageDecoder =
     Json.Decode.map3 AppMessage
@@ -135,15 +119,20 @@ messageDecoder =
         messageTextDecoder
 
 
+getCellCoordsString : Int -> Int -> String
+getCellCoordsString rowIndex cellIndex =
+    String.fromInt rowIndex
+        ++ String.fromInt cellIndex
+
+
+getSelectCellMessage : Int -> Int -> Json.Encode.Value
+getSelectCellMessage rowIndex cellIndex =
+    Json.Encode.string (getCellCoordsString rowIndex cellIndex)
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SendToJS ->
-            ( model
-              -- TODO: Build a WS message.
-            , sendMessage (Json.Encode.string "a string, stringified")
-            )
-
         DataFromJS encodedValue ->
             case Json.Decode.decodeValue messageDecoder encodedValue of
                 -- If there is a decode problem, add it to the model so we can see it.
@@ -168,16 +157,11 @@ update msg model =
                     )
 
         SelectCell rowIndex cellIndex ->
-            let
-                str =
-                    String.fromInt rowIndex
-                        ++ String.fromInt cellIndex
-            in
             ( { model
                 | debugString =
-                    Just str
+                    Just (getCellCoordsString rowIndex cellIndex)
               }
-            , sendMessage (Json.Encode.string str)
+            , sendMessage (getSelectCellMessage rowIndex cellIndex)
             )
 
 
@@ -256,7 +240,6 @@ view : Model -> Html Msg
 view model =
     div []
         [ boardView model.board
-        , button [ onClick SendToJS ] [ text "SendToJS" ]
         , renderMessages model.messages
         , renderDebugString model.debugString
         ]

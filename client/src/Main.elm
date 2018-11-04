@@ -168,8 +168,16 @@ update msg model =
                     )
 
         SelectCell rowIndex cellIndex ->
-            ( model
-            , Cmd.none
+            let
+                str =
+                    String.fromInt rowIndex
+                        ++ String.fromInt cellIndex
+            in
+            ( { model
+                | debugString =
+                    Just str
+              }
+            , sendMessage (Json.Encode.string str)
             )
 
 
@@ -203,13 +211,16 @@ renderMessages messages =
 
 
 renderDebugString : Maybe String -> Html Msg
-renderDebugString maybe =
-    case maybe of
+renderDebugString maybeDebugString =
+    case maybeDebugString of
         Nothing ->
             div [] []
 
-        Just err ->
-            div [] [ text err ]
+        Just debugString ->
+            div []
+                [ h2 [] [ text "Debug This!" ]
+                , div [] [ text debugString ]
+                ]
 
 
 cellAttributeView : String -> Int -> Html Msg
@@ -247,10 +258,7 @@ view model =
         [ boardView model.board
         , button [ onClick SendToJS ] [ text "SendToJS" ]
         , renderMessages model.messages
-        , div []
-            [ h2 [] [ text "Debug This!" ]
-            , renderDebugString model.debugString
-            ]
+        , renderDebugString model.debugString
         ]
 
 

@@ -161,6 +161,13 @@ getNewModel model appMessage =
                 , yourTurn = appMessage.yourTurn == Just True
             }
 
+        "update-game" ->
+            { model
+                | debugString = Just "update-game happened"
+                , yourTurn =
+                    appMessage.yourTurn == Just True
+            }
+
         _ ->
             { model
                 | debugString = Nothing

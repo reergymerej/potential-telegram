@@ -125,9 +125,21 @@ getCellCoordsString rowIndex cellIndex =
         ++ String.fromInt cellIndex
 
 
+getRelativeCellIndex : Int -> Int -> Int -> Int
+getRelativeCellIndex rowLength rowIndex cellIndex =
+    rowLength * rowIndex + cellIndex
+
+
 getSelectCellMessage : Int -> Int -> Json.Encode.Value
 getSelectCellMessage rowIndex cellIndex =
-    Json.Encode.string (getCellCoordsString rowIndex cellIndex)
+    let
+        finalIndex =
+            getRelativeCellIndex 3 rowIndex cellIndex
+    in
+    Json.Encode.object
+        [ ( "type", Json.Encode.string "move" )
+        , ( "cellIndex", Json.Encode.int finalIndex )
+        ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

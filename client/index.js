@@ -11,11 +11,6 @@ import('./src/Main.elm')
 const setupWebSockets = (app) => {
   console.log('hello!')
 
-  app.ports.sendMessage.subscribe(function(data) {
-    console.log('data from elm', data)
-    // localStorage.setItem('cache', JSON.stringify(data));
-  });
-
   const webSocket = new WebSocket('ws://localhost:8080', 'optionalProtocol')
 
   const decode = JSON.parse
@@ -40,11 +35,8 @@ const setupWebSockets = (app) => {
     console.log('webSocket got an error')
   }
 
-  /*
-   *  Elm will send this to us through a port.  Then we send it through the ws.
-   *  webSocket.send(JSON.stringify({
-   *    type: 'move',
-   *    cellIndex,
-   *  }))
-   */
+  app.ports.sendMessage.subscribe((data) => {
+    console.log('data from elm', data)
+    webSocket.send(JSON.stringify(data))
+  })
 }

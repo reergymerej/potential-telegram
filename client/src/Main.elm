@@ -44,6 +44,7 @@ type alias Model =
     , messages : List AppMessage
     , debugString : Maybe String
     , yourTurn : Bool
+    , you : Maybe String
     }
 
 
@@ -82,6 +83,7 @@ init _ =
       , messages = []
       , debugString = Maybe.Nothing
       , yourTurn = False
+      , you = Maybe.Nothing
       }
     , Cmd.none
     )

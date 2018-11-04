@@ -206,15 +206,28 @@ renderDecodeError maybe =
             div [] [ text err ]
 
 
-cellView : Cell -> Html Msg
-cellView model =
-    div [ Html.Attributes.attribute "class" "cell" ] []
+cellAttributeView : String -> Int -> Html Msg
+cellAttributeView label index =
+    div [] [ text (label ++ ": " ++ String.fromInt index) ]
+
+
+cellView : Int -> Cell -> Html Msg
+cellView rowIndex cell =
+    div [ Html.Attributes.attribute "class" "cell" ]
+        [ Html.button [] [ text "pick" ]
+        , cellAttributeView "row" rowIndex
+        , cellAttributeView "cell" cell.index
+        ]
 
 
 rowView : Row -> Html Msg
-rowView model =
+rowView row =
+    let
+        cellViewForRow =
+            cellView row.index
+    in
     div [ Html.Attributes.attribute "class" "row" ]
-        (List.map cellView model.cells)
+        (List.map cellViewForRow row.cells)
 
 
 boardView : Board -> Html.Html Msg
@@ -225,13 +238,13 @@ boardView board =
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick SendToJS ] [ text "SendToJS" ]
+        [ boardView model.board
+        , button [ onClick SendToJS ] [ text "SendToJS" ]
         , renderMessages model.messages
         , div []
             [ h2 [] [ text "Decode Error" ]
             , renderDecodeError model.decodeError
             ]
-        , boardView model.board
         ]
 
 

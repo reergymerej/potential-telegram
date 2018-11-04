@@ -10,6 +10,7 @@ import Json.Encode
 type alias AppMessage =
     { messageType : String
     , time : Int
+    , text : Maybe String
     }
 
 
@@ -54,6 +55,12 @@ messageTimeDecoder =
     Json.Decode.field "time" Json.Decode.int
 
 
+messageTextDecoder : Json.Decode.Decoder (Maybe String)
+messageTextDecoder =
+    Json.Decode.maybe
+        (Json.Decode.field "text" Json.Decode.string)
+
+
 
 -- type alias Foo = { bing : Int, bang : Int }
 -- implicitly creates
@@ -71,9 +78,10 @@ messageTimeDecoder =
 
 messageDecoder : Json.Decode.Decoder AppMessage
 messageDecoder =
-    Json.Decode.map2 AppMessage
+    Json.Decode.map3 AppMessage
         messageTypeDecoder
         messageTimeDecoder
+        messageTextDecoder
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -109,12 +117,24 @@ update msg model =
                     )
 
 
+renderMessageText : Maybe String -> Html Msg
+renderMessageText maybeText =
+    case maybeText of
+        Nothing ->
+            span [] []
+
+        Just messageText ->
+            span [] [ text messageText ]
+
+
 renderAppMessage : AppMessage -> Html Msg
 renderAppMessage m =
     li []
         [ span [] [ text (String.fromInt m.time) ]
         , span [] [ text " - " ]
         , span [] [ text m.messageType ]
+        , span [] [ text " - " ]
+        , renderMessageText m.text
         ]
 
 

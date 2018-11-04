@@ -5,7 +5,6 @@ import Html exposing (..)
 import Html.Events exposing (..)
 import Json.Decode
 import Json.Encode
-import Random
 
 
 type alias AppMessage =
@@ -16,7 +15,6 @@ type alias AppMessage =
 
 type alias Model =
     { messages : List AppMessage
-    , fromJs : Maybe Int
     , decodeError : Maybe String
     }
 
@@ -29,7 +27,6 @@ type Msg
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { messages = []
-      , fromJs = Maybe.Nothing
       , decodeError = Maybe.Nothing
       }
     , Cmd.none
@@ -58,11 +55,18 @@ messageTimeDecoder =
 
 
 
--- map2 : (a -> b -> value) -> Decoder a -> Decoder b -> Decoder value
--- (a -> b -> value) is the Record Constructor for a type alias
 -- type alias Foo = { bing : Int, bang : Int }
+-- implicitly creates
+-- Foo : Int -> Int -> Foo
+-- so you can
 -- Foo 1 2 returns { bing = 1, bang = 2 }
--- FooConstructor : Int -> Int -> Foo
+--
+-- This is a Record Constructor.  It can be expressed as
+-- (a -> b -> value)
+--
+-- So in
+-- map2 : (a -> b -> value) -> Decoder a -> Decoder b -> Decoder value
+-- the first arg is/can be a type.
 
 
 messageDecoder : Json.Decode.Decoder AppMessage
@@ -70,16 +74,6 @@ messageDecoder =
     Json.Decode.map2 AppMessage
         messageTypeDecoder
         messageTimeDecoder
-
-
-decodeDataFromJs : Json.Encode.Value -> Result Json.Decode.Error AppMessage
-decodeDataFromJs encodedValue =
-    case Json.Decode.decodeValue messageDecoder encodedValue of
-        Result.Err decodeError ->
-            Result.Err decodeError
-
-        Result.Ok decoded ->
-            Result.Ok decoded
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -92,7 +86,7 @@ update msg model =
             )
 
         DataFromJS encodedValue ->
-            case decodeDataFromJs encodedValue of
+            case Json.Decode.decodeValue messageDecoder encodedValue of
                 -- If there is a decode problem, add it to the model so we can see it.
                 Result.Err decodeError ->
                     ( { model
@@ -110,16 +104,9 @@ update msg model =
                     ( { model
                         | decodeError = Nothing
                         , messages = decoded :: model.messages
-
-                        -- , messages = { messageType = "dummy" } :: model.messages
                       }
                     , Cmd.none
                     )
-
-
-getMessageType : Json.Encode.Value -> Result Json.Decode.Error String
-getMessageType encodedValue =
-    Json.Decode.decodeValue (Json.Decode.field "type" Json.Decode.string) encodedValue
 
 
 renderAppMessage : AppMessage -> Html Msg

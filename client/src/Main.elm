@@ -36,6 +36,7 @@ type alias AppMessage =
     , time : Int
     , text : Maybe String
     , yourTurn : Maybe Bool
+    , board : Maybe Board
     }
 
 
@@ -122,13 +123,22 @@ messageYourTurnDecoder =
         (Json.Decode.field "yourTurn" Json.Decode.bool)
 
 
+messageBoardDecoder : Json.Decode.Decoder (Maybe Board)
+messageBoardDecoder =
+    Json.Decode.maybe
+        (Json.Decode.field "board"
+            (Json.Decode.list Json.Decode.string)
+        )
+
+
 messageDecoder : Json.Decode.Decoder AppMessage
 messageDecoder =
-    Json.Decode.map4 AppMessage
+    Json.Decode.map5 AppMessage
         messageTypeDecoder
         messageTimeDecoder
         messageTextDecoder
         messageYourTurnDecoder
+        messageBoardDecoder
 
 
 getCellCoordsString : Int -> Int -> String
@@ -154,6 +164,34 @@ getSelectCellMessage rowIndex cellIndex =
         ]
 
 
+getBoardFromMessage : AppMessage -> Board
+getBoardFromMessage message =
+    { rows =
+        [ { index = 0
+          , cells =
+                [ { index = 0, status = Available }
+                , { index = 1, status = X }
+                , { index = 2, status = Available }
+                ]
+          }
+        , { index = 1
+          , cells =
+                [ { index = 0, status = Available }
+                , { index = 1, status = Available }
+                , { index = 2, status = Available }
+                ]
+          }
+        , { index = 2
+          , cells =
+                [ { index = 0, status = Available }
+                , { index = 1, status = Available }
+                , { index = 2, status = Available }
+                ]
+          }
+        ]
+    }
+
+
 getNewModel : Model -> AppMessage -> Model
 getNewModel model appMessage =
     case appMessage.messageType of
@@ -168,6 +206,8 @@ getNewModel model appMessage =
                 | debugString = Just "update-game happened"
                 , yourTurn =
                     appMessage.yourTurn == Just True
+                , board =
+                    getBoardFromMessage appMessage
             }
 
         _ ->
@@ -264,38 +304,38 @@ cellAttributeView label index =
     div [] [ text (label ++ ": " ++ String.fromInt index) ]
 
 
-cellView : Bool -> Int -> Cell -> Html Msg
-cellView isSelectable rowIndex cell =
-    div [ Html.Attributes.attribute "class" "cell" ]
-        [ if isSelectable then
+cellView : Int -> Cell -> Html Msg
+cellView rowIndex cell =
+    case cell.status of
+        Available ->
             Html.button [ onClick (SelectCell rowIndex cell.index) ] [ text "pick" ]
 
-          else
-            div [] []
-        , cellAttributeView "row" rowIndex
-        , cellAttributeView "cell" cell.index
-        ]
+        X ->
+            Html.div [] [ text "X" ]
+
+        O ->
+            Html.div [] [ text "O" ]
 
 
-rowView : Bool -> Row -> Html Msg
-rowView yourTurn row =
+rowView : Row -> Html Msg
+rowView row =
     let
         cellViewForRow =
-            cellView yourTurn row.index
+            cellView row.index
     in
     div [ Html.Attributes.attribute "class" "row" ]
         (List.map cellViewForRow row.cells)
 
 
-boardView : Bool -> Board -> Html.Html Msg
-boardView yourTurn board =
-    div [] (List.map (rowView yourTurn) board.rows)
+boardView : Board -> Html.Html Msg
+boardView board =
+    div [] (List.map rowView board.rows)
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ boardView model.yourTurn model.board
+        [ boardView model.board
         , renderDebugString model.debugString
         , renderMessages model.messages
         ]

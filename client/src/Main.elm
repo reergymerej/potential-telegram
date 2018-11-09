@@ -349,11 +349,15 @@ cellAttributeView label index =
     div [] [ text (label ++ ": " ++ String.fromInt index) ]
 
 
-cellView : Int -> Cell -> Html Msg
-cellView rowIndex cell =
+cellView : Bool -> Int -> Cell -> Html Msg
+cellView canSelect rowIndex cell =
     case cell.status of
         Available ->
-            Html.button [ onClick (SelectCell rowIndex cell.index) ] [ text "pick" ]
+            if canSelect then
+                Html.button [ onClick (SelectCell rowIndex cell.index) ] [ text "pick" ]
+
+            else
+                Html.button [ Html.Attributes.attribute "disabled" "disabled" ] [ text "pick" ]
 
         X ->
             Html.div [] [ text "X" ]
@@ -362,25 +366,29 @@ cellView rowIndex cell =
             Html.div [] [ text "O" ]
 
 
-rowView : Row -> Html Msg
-rowView row =
+rowView : Bool -> Row -> Html Msg
+rowView canSelect row =
     let
         cellViewForRow =
-            cellView row.index
+            cellView canSelect row.index
     in
     div [ Html.Attributes.attribute "class" "row" ]
         (List.map cellViewForRow row.cells)
 
 
-boardView : Board -> Html.Html Msg
-boardView board =
-    div [] (List.map rowView board.rows)
+boardView : Board -> Bool -> Html.Html Msg
+boardView board canSelect =
+    let
+        rowViewForBoard =
+            rowView canSelect
+    in
+    div [] (List.map rowViewForBoard board.rows)
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ boardView model.board
+        [ boardView model.board model.yourTurn
         , renderDebugString model.debugString
         , renderMessages model.messages
         ]

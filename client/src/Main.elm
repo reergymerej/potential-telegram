@@ -193,8 +193,8 @@ getSelectCellMessage rowIndex cellIndex =
         ]
 
 
-getCellFromMessageRow : Int -> String -> Cell
-getCellFromMessageRow index value =
+getCellFromMessageRowValue : Int -> String -> Cell
+getCellFromMessageRowValue index value =
     { index = index
     , status =
         case value of
@@ -209,17 +209,17 @@ getCellFromMessageRow index value =
     }
 
 
-getRowFromMessageBoard : Int -> MessageRow -> Row
-getRowFromMessageBoard index messageBoard =
+getRowFromMessageBoardItem : Int -> MessageRow -> Row
+getRowFromMessageBoardItem index messageRow =
     { index = index
     , cells =
-        List.indexedMap getCellFromMessageRow messageBoard
+        List.indexedMap getCellFromMessageRowValue messageRow
     }
 
 
 getRowsFromMessageBoard : List MessageRow -> List Row
 getRowsFromMessageBoard messageBoard =
-    List.indexedMap getRowFromMessageBoard messageBoard
+    List.indexedMap getRowFromMessageBoardItem messageBoard
 
 
 getBoardFromMessage : AppMessage -> Board -> Board

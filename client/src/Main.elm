@@ -5,7 +5,7 @@ import Html exposing (..)
 import Html.Attributes
 import Html.Events exposing (..)
 import Json.Decode as D
-import Json.Encode
+import Json.Encode as E
 
 
 type CellStatus
@@ -58,7 +58,7 @@ type alias Model =
 
 
 type Msg
-    = DataFromJS Json.Encode.Value
+    = DataFromJS E.Value
     | SelectCell Int Int
 
 
@@ -98,7 +98,7 @@ init _ =
     )
 
 
-port fromJS : (Json.Encode.Value -> msg) -> Sub msg
+port fromJS : (E.Value -> msg) -> Sub msg
 
 
 subscriptions : Model -> Sub Msg
@@ -106,7 +106,7 @@ subscriptions model =
     fromJS DataFromJS
 
 
-port sendMessage : Json.Encode.Value -> Cmd whateverwewant
+port sendMessage : E.Value -> Cmd whateverwewant
 
 
 nullableString : D.Decoder String
@@ -181,15 +181,15 @@ getRelativeCellIndex rowLength rowIndex cellIndex =
     rowLength * rowIndex + cellIndex
 
 
-getSelectCellMessage : Int -> Int -> Json.Encode.Value
+getSelectCellMessage : Int -> Int -> E.Value
 getSelectCellMessage rowIndex cellIndex =
     let
         finalIndex =
             getRelativeCellIndex 3 rowIndex cellIndex
     in
-    Json.Encode.object
-        [ ( "type", Json.Encode.string "move" )
-        , ( "cellIndex", Json.Encode.int finalIndex )
+    E.object
+        [ ( "type", E.string "move" )
+        , ( "cellIndex", E.int finalIndex )
         ]
 
 
@@ -238,14 +238,12 @@ getNewModel model appMessage =
     case appMessage.messageType of
         "start-game" ->
             { model
-                | debugString = Just "started the game!"
-                , yourTurn = appMessage.yourTurn == Just True
+                | yourTurn = appMessage.yourTurn == Just True
             }
 
         "update-game" ->
             { model
-                | debugString = Just "update-game happened"
-                , yourTurn =
+                | yourTurn =
                     appMessage.yourTurn == Just True
                 , board =
                     getBoardFromMessage appMessage model.board
@@ -353,11 +351,15 @@ cellView : Bool -> Int -> Cell -> Html Msg
 cellView canSelect rowIndex cell =
     case cell.status of
         Available ->
-            if canSelect then
-                Html.button [ onClick (SelectCell rowIndex cell.index) ] [ text "pick" ]
+            let
+                attributes =
+                    if canSelect then
+                        [ onClick (SelectCell rowIndex cell.index) ]
 
-            else
-                Html.button [ Html.Attributes.attribute "disabled" "disabled" ] [ text "pick" ]
+                    else
+                        [ Html.Attributes.attribute "disabled" "disabled" ]
+            in
+            Html.button attributes [ text "pick" ]
 
         X ->
             Html.div [] [ text "X" ]
@@ -368,21 +370,13 @@ cellView canSelect rowIndex cell =
 
 rowView : Bool -> Row -> Html Msg
 rowView canSelect row =
-    let
-        cellViewForRow =
-            cellView canSelect row.index
-    in
     div [ Html.Attributes.attribute "class" "row" ]
-        (List.map cellViewForRow row.cells)
+        (List.map (cellView canSelect row.index) row.cells)
 
 
 boardView : Board -> Bool -> Html.Html Msg
 boardView board canSelect =
-    let
-        rowViewForBoard =
-            rowView canSelect
-    in
-    div [] (List.map rowViewForBoard board.rows)
+    div [] (List.map (rowView canSelect) board.rows)
 
 
 view : Model -> Html Msg

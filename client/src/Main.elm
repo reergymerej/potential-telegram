@@ -193,32 +193,44 @@ getSelectCellMessage rowIndex cellIndex =
         ]
 
 
-getBoardFromMessage : AppMessage -> Board
-getBoardFromMessage message =
-    { rows =
-        [ { index = 0
-          , cells =
-                [ { index = 0, status = Available }
-                , { index = 1, status = X }
-                , { index = 2, status = Available }
-                ]
-          }
-        , { index = 1
-          , cells =
-                [ { index = 0, status = Available }
-                , { index = 1, status = Available }
-                , { index = 2, status = Available }
-                ]
-          }
-        , { index = 2
-          , cells =
-                [ { index = 0, status = Available }
-                , { index = 1, status = Available }
-                , { index = 2, status = Available }
-                ]
-          }
-        ]
+getCellFromMessageRow : Int -> String -> Cell
+getCellFromMessageRow index value =
+    { index = index
+    , status =
+        case value of
+            "X" ->
+                X
+
+            "O" ->
+                O
+
+            _ ->
+                Available
     }
+
+
+getRowFromMessageBoard : Int -> MessageRow -> Row
+getRowFromMessageBoard index messageBoard =
+    { index = index
+    , cells =
+        List.indexedMap getCellFromMessageRow messageBoard
+    }
+
+
+getRowsFromMessageBoard : List MessageRow -> List Row
+getRowsFromMessageBoard messageBoard =
+    List.indexedMap getRowFromMessageBoard messageBoard
+
+
+getBoardFromMessage : AppMessage -> Board -> Board
+getBoardFromMessage message currentBoard =
+    case message.board of
+        Nothing ->
+            currentBoard
+
+        Just messageBoard ->
+            { rows = getRowsFromMessageBoard messageBoard
+            }
 
 
 getNewModel : Model -> AppMessage -> Model
@@ -236,7 +248,7 @@ getNewModel model appMessage =
                 , yourTurn =
                     appMessage.yourTurn == Just True
                 , board =
-                    getBoardFromMessage appMessage
+                    getBoardFromMessage appMessage model.board
             }
 
         _ ->

@@ -4,7 +4,7 @@ import Browser
 import Html exposing (..)
 import Html.Attributes
 import Html.Events exposing (..)
-import Json.Decode
+import Json.Decode as D
 import Json.Encode
 
 
@@ -12,6 +12,14 @@ type CellStatus
     = X
     | O
     | Available
+
+
+type alias MessageRow =
+    List String
+
+
+type alias MessageBoard =
+    List MessageRow
 
 
 type alias Cell =
@@ -36,7 +44,7 @@ type alias AppMessage =
     , time : Int
     , text : Maybe String
     , yourTurn : Maybe Bool
-    , board : Maybe Board
+    , board : Maybe MessageBoard
     }
 
 
@@ -101,39 +109,60 @@ subscriptions model =
 port sendMessage : Json.Encode.Value -> Cmd whateverwewant
 
 
-messageTypeDecoder : Json.Decode.Decoder String
+nullableString : D.Decoder String
+nullableString =
+    D.oneOf
+        [ D.string
+        , D.null "?"
+        ]
+
+
+rowDecoder : D.Decoder MessageRow
+rowDecoder =
+    D.list nullableString
+
+
+boardDecoder : D.Decoder MessageBoard
+boardDecoder =
+    D.list rowDecoder
+
+
+decodeBoardFromJson : String -> Result D.Error MessageBoard
+decodeBoardFromJson json =
+    D.decodeString boardDecoder json
+
+
+messageTypeDecoder : D.Decoder String
 messageTypeDecoder =
-    Json.Decode.field "type" Json.Decode.string
+    D.field "type" D.string
 
 
-messageTimeDecoder : Json.Decode.Decoder Int
+messageTimeDecoder : D.Decoder Int
 messageTimeDecoder =
-    Json.Decode.field "time" Json.Decode.int
+    D.field "time" D.int
 
 
-messageTextDecoder : Json.Decode.Decoder (Maybe String)
+messageTextDecoder : D.Decoder (Maybe String)
 messageTextDecoder =
-    Json.Decode.maybe
-        (Json.Decode.field "text" Json.Decode.string)
+    D.maybe
+        (D.field "text" D.string)
 
 
-messageYourTurnDecoder : Json.Decode.Decoder (Maybe Bool)
+messageYourTurnDecoder : D.Decoder (Maybe Bool)
 messageYourTurnDecoder =
-    Json.Decode.maybe
-        (Json.Decode.field "yourTurn" Json.Decode.bool)
+    D.maybe
+        (D.field "yourTurn" D.bool)
 
 
-messageBoardDecoder : Json.Decode.Decoder (Maybe Board)
+messageBoardDecoder : D.Decoder (Maybe MessageBoard)
 messageBoardDecoder =
-    Json.Decode.maybe
-        (Json.Decode.field "board"
-            (Json.Decode.list Json.Decode.string)
-        )
+    D.maybe
+        (D.field "board" boardDecoder)
 
 
-messageDecoder : Json.Decode.Decoder AppMessage
+messageDecoder : D.Decoder AppMessage
 messageDecoder =
-    Json.Decode.map5 AppMessage
+    D.map5 AppMessage
         messageTypeDecoder
         messageTimeDecoder
         messageTextDecoder
@@ -220,13 +249,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         DataFromJS encodedValue ->
-            case Json.Decode.decodeValue messageDecoder encodedValue of
+            case D.decodeValue messageDecoder encodedValue of
                 -- If there is a decode problem, add it to the model so we can see it.
                 Result.Err decodeError ->
                     ( { model
                         | debugString =
                             Just
-                                (Json.Decode.errorToString
+                                (D.errorToString
                                     decodeError
                                 )
                       }

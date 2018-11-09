@@ -290,12 +290,16 @@ update msg model =
                     )
 
         SelectCell rowIndex cellIndex ->
-            ( { model
-                | debugString =
-                    Just (getCellCoordsString rowIndex cellIndex)
-              }
-            , sendMessage (getSelectCellMessage rowIndex cellIndex)
-            )
+            if not model.yourTurn then
+                ( model, Cmd.none )
+
+            else
+                ( { model
+                    | debugString =
+                        Just (getCellCoordsString rowIndex cellIndex)
+                  }
+                , sendMessage (getSelectCellMessage rowIndex cellIndex)
+                )
 
 
 renderMessageText : Maybe String -> Html Msg

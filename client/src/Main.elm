@@ -12,6 +12,7 @@ type CellStatus
     = X
     | O
     | Available
+    | Unavailable
 
 
 type alias MessageRow =
@@ -193,8 +194,8 @@ getSelectCellMessage rowIndex cellIndex =
         ]
 
 
-getCellFromMessageRowValue : Int -> String -> Cell
-getCellFromMessageRowValue index value =
+getCellFromMessageRowValue : Bool -> Int -> String -> Cell
+getCellFromMessageRowValue yourTurn index value =
     { index = index
     , status =
         case value of
@@ -205,31 +206,35 @@ getCellFromMessageRowValue index value =
                 O
 
             _ ->
-                Available
+                if yourTurn then
+                    Available
+
+                else
+                    Unavailable
     }
 
 
-getRowFromMessageBoardItem : Int -> MessageRow -> Row
-getRowFromMessageBoardItem index messageRow =
+getRowFromMessageBoardItem : Bool -> Int -> MessageRow -> Row
+getRowFromMessageBoardItem yourTurn index messageRow =
     { index = index
     , cells =
-        List.indexedMap getCellFromMessageRowValue messageRow
+        List.indexedMap (getCellFromMessageRowValue yourTurn) messageRow
     }
 
 
-getRowsFromMessageBoard : List MessageRow -> List Row
-getRowsFromMessageBoard messageBoard =
-    List.indexedMap getRowFromMessageBoardItem messageBoard
+getRowsFromMessageBoard : List MessageRow -> Bool -> List Row
+getRowsFromMessageBoard messageBoard yourTurn =
+    List.indexedMap (getRowFromMessageBoardItem yourTurn) messageBoard
 
 
-getBoardFromMessage : AppMessage -> Board -> Board
-getBoardFromMessage message currentBoard =
+getBoardFromMessage : AppMessage -> Board -> Bool -> Board
+getBoardFromMessage message currentBoard yourTurn =
     case message.board of
         Nothing ->
             currentBoard
 
         Just messageBoard ->
-            { rows = getRowsFromMessageBoard messageBoard
+            { rows = getRowsFromMessageBoard messageBoard yourTurn
             }
 
 
@@ -248,7 +253,7 @@ getNewModel model appMessage =
                 , yourTurn =
                     appMessage.yourTurn == Just True
                 , board =
-                    getBoardFromMessage appMessage model.board
+                    getBoardFromMessage appMessage model.board model.yourTurn
             }
 
         _ ->
@@ -290,16 +295,12 @@ update msg model =
                     )
 
         SelectCell rowIndex cellIndex ->
-            if not model.yourTurn then
-                ( model, Cmd.none )
-
-            else
-                ( { model
-                    | debugString =
-                        Just (getCellCoordsString rowIndex cellIndex)
-                  }
-                , sendMessage (getSelectCellMessage rowIndex cellIndex)
-                )
+            ( { model
+                | debugString =
+                    Just (getCellCoordsString rowIndex cellIndex)
+              }
+            , sendMessage (getSelectCellMessage rowIndex cellIndex)
+            )
 
 
 renderMessageText : Maybe String -> Html Msg
@@ -354,6 +355,9 @@ cellView rowIndex cell =
     case cell.status of
         Available ->
             Html.button [ onClick (SelectCell rowIndex cell.index) ] [ text "pick" ]
+
+        Unavailable ->
+            Html.button [ Html.Attributes.disabled True ] [ text "pick" ]
 
         X ->
             Html.div [] [ text "X" ]
